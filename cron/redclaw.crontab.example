@@ -1,0 +1,22 @@
+# RedClaw cron fallback template.
+# Copy entries deliberately into the live user's crontab after confirming paths and commands.
+#
+# Install example:
+#   crontab -l > /tmp/redclaw.cron 2>/dev/null || true
+#   cat cron/redclaw.crontab.example >> /tmp/redclaw.cron
+#   crontab /tmp/redclaw.cron
+
+SHELL=/bin/bash
+
+# Maton both-inbox triage fallback.
+# Prefer Maton webhook/push first; this cron is backup reliability.
+*/5 8-22 * * * cd ~/h/code/redclaw && . ~/.openclaw/secrets/maton.env && python3 scripts/maton_triage_runner.py --policy config/maton-triage.policy.json --state ~/.openclaw/state/maton-email-state.json --output ~/.openclaw/state/maton-email-latest.json >> ~/.openclaw/logs/maton-triage.log 2>&1
+
+# Mempalace status check.
+17 */4 * * * cd ~/h/code/redclaw && python3 scripts/mempalace_memory_sync.py --task status --output ~/.openclaw/state/mempalace-latest.json >> ~/.openclaw/logs/mempalace.log 2>&1
+
+# RedClaw config validation, daily.
+41 4 * * * cd ~/h/code/redclaw && bash scripts/validate-redclaw-config.sh >> ~/.openclaw/logs/redclaw-validate.log 2>&1
+
+# Workspace skill audit, daily.
+49 4 * * * cd ~/h/code/redclaw && python3 scripts/audit-skills.py > ~/.openclaw/state/skill-audit-latest.json 2>> ~/.openclaw/logs/skill-audit.log
