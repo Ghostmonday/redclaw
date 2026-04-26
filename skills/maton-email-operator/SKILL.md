@@ -1,41 +1,40 @@
 ---
 name: maton-email-operator
-description: Enforce Maton as the canonical email management interface for both Gmail accounts. Use this skill whenever reading, triaging, drafting, labeling, archiving, replying to, or summarizing email.
+description: Use Maton as the canonical email control plane for both Gmail accounts. Invoke for email search, triage, summaries, labels, archives, drafts, replies, recurring checks, and email-derived memory.
 ---
 
 # Maton Email Operator
 
-Maton is the email control plane.
+Maton is the canonical email control plane.
 
-RedClaw should manage Amir's email through Maton for everything: both Gmail accounts, triage, labels, drafts, replies, summaries, and recurring checks.
+Use Maton for everything email-related across both Gmail accounts. Direct Gmail access is not the preferred path and must not be used for mutations unless Maton explicitly owns that operation or Amir explicitly overrides the boundary.
 
 ## Core Rule
 
-Use Maton for email operations.
+Email work routes through Maton.
 
-Direct Gmail tool usage is not the preferred path. Direct Gmail may only be used as an emergency read-only fallback when Maton is unavailable and the user explicitly needs an answer now.
+If Maton is unavailable, disclose that plainly. Use direct Gmail only as a read-only emergency fallback when the user needs an answer immediately. Do not silently mutate email state through Gmail.
 
 ## Scope
 
-Maton should manage:
+Maton owns:
 
 - both Gmail accounts
 - inbox triage
-- unread summaries
-- important/urgent detection
-- labels and archive rules
+- unread and priority summaries
+- urgent/security detection
+- label recommendations and label application
+- archive workflows
 - draft creation
 - reply preparation
 - thread summaries
 - attachment awareness
-- recurring email checks through heartbeat/cron
+- recurring email checks through cron/heartbeat
 - email-derived memory distilled into Mempalace
 
 ## Account Model
 
-Configure both Gmail accounts as separate Maton identities.
-
-Use stable aliases rather than raw account names in agent reasoning:
+Treat the accounts as stable Maton identities:
 
 ```yaml
 accounts:
@@ -49,89 +48,101 @@ accounts:
     purpose: business/projects
 ```
 
-Do not expose email addresses in public/group contexts.
+Use account aliases in reasoning and reports. Do not expose raw email addresses in public or group contexts.
 
-## Email Workflow
+## Standard Workflow
 
 For any email task:
 
 1. Route through Maton.
 2. Identify account scope: `primary`, `business`, or `both`.
-3. Search/read the minimum necessary email content.
-4. Classify messages.
-5. Take only the requested action or a safe default action.
-6. Store durable preferences or decisions in Mempalace, not raw email bodies.
+3. Read the minimum necessary content.
+4. Classify messages consistently.
+5. Perform only the requested action or a clearly safe default action.
+6. Store durable preferences/decisions in Mempalace as distilled facts.
+7. Report mutations precisely.
 
 ## Triage Categories
 
-Use these categories consistently:
-
 | Category | Meaning | Default Action |
 | --- | --- | --- |
-| urgent | time-sensitive, money, legal, outage, account/security | surface immediately |
-| action_required | needs Amir response/decision | summarize and propose next action |
-| waiting | someone else owes Amir response | track, do not nag too often |
-| receipt | order/payment/subscription records | label/archive when safe |
-| noise | newsletters, promos, automated low-value mail | summarize only if asked; label/archive if rule exists |
-| security | login, password, suspicious access | surface immediately; never click links automatically |
+| `urgent` | time-sensitive money, legal, outage, account/security | surface immediately |
+| `security` | login, password, suspicious access, account alerts | surface immediately; never click links automatically |
+| `action_required` | needs Amir response or decision | summarize and propose next action |
+| `waiting` | someone else owes Amir a response | track without noisy reminders |
+| `receipt` | order, payment, subscription, invoice | label/archive when safe or requested |
+| `project` | tied to active work/repo/client/vendor | route to the relevant project context |
+| `noise` | newsletters, promos, low-value automation | summarize only if asked; label/archive only if rule exists |
 
-## Write/Send Boundary
+## Send / Delete / External Boundaries
 
-Maton may create drafts freely when asked.
+Allowed when requested:
 
-Maton must not send emails unless Amir explicitly says to send.
+- search/read email through Maton
+- summarize threads
+- create drafts
+- recommend labels
+- apply labels when the instruction clearly asks for cleanup
+- archive non-urgent messages after labeling when clearly requested
 
-Maton must not unsubscribe, click links, change account settings, or modify filters unless explicitly instructed.
+Requires explicit approval:
 
-## Labeling and Archive Defaults
-
-Safe without extra confirmation when clearly requested:
-
-- create labels
-- apply labels
-- archive non-urgent messages after labeling
-- mark obvious low-risk notifications as read if the instruction includes cleanup
-
-Not safe without explicit instruction:
-
-- delete emails
+- send email
+- delete email
 - report spam
 - unsubscribe
-- send replies
 - forward private email
-- change filters globally
+- click links
+- change filters or account settings
+- grant permissions or connect accounts
 
-## Both-Account Checks
+Never send just because a draft exists. Drafting and sending are separate actions.
 
-For recurring checks, Maton should inspect both accounts and produce one consolidated report:
+## Both-Account Recurring Check
+
+For recurring checks, Maton should inspect both accounts and produce one consolidated result:
 
 ```text
 Email check
 Primary: <urgent/action summary or clear>
 Business: <urgent/action summary or clear>
 Needs Amir: <number + bullets>
-Silent: <count archived/labeled/noise if any>
+Silent: <count labeled/archived/noise ignored, if any>
 ```
 
-If nothing important exists, return exactly:
+If nothing important exists, Maton should return exactly:
 
 ```text
 EMAIL_OK
 ```
 
-Heartbeat may translate `EMAIL_OK` into `HEARTBEAT_OK` when no other heartbeat modules need attention.
+Heartbeat may convert `EMAIL_OK` to `HEARTBEAT_OK` when no other heartbeat module has action.
 
 ## Mempalace Integration
 
-Use Mempalace for durable email-derived memory:
+Write only distilled email-derived memory to Mempalace:
 
 - preferred senders
-- recurring obligations
 - account routing rules
-- project/vendor relationships
-- label policy decisions
+- label policies
+- recurring obligations
+- vendor/project relationships
+- explicit reply preferences
 
-Never store raw email bodies in Mempalace unless explicitly requested.
+Do not store raw private email bodies unless Amir explicitly requests it.
+
+Required email-derived memory shape:
+
+```json
+{
+  "type": "email_context",
+  "project": "general | redclaw | fightcitytickets | parkingbreaker | fatedfortress",
+  "source": "maton",
+  "confidence": "high | medium | low",
+  "summary": "distilled fact without raw private body text",
+  "updated_at": "ISO-8601 timestamp"
+}
+```
 
 ## Failure Behavior
 
@@ -141,7 +152,7 @@ If Maton is unavailable:
 Maton unavailable. I will not mutate email state. I can use read-only fallback only if needed and will say exactly what was not done.
 ```
 
-Do not silently fall back to direct Gmail mutation.
+If account scope is unclear, default to the least invasive search across both accounts and do not mutate state.
 
 ## Validation Checklist
 
@@ -149,6 +160,7 @@ A valid email operation must show:
 
 - Maton was the intended route.
 - account scope was explicit: primary, business, or both.
-- send/delete/unsubscribe actions were not performed without explicit approval.
+- send/delete/unsubscribe/forward/filter actions were not performed without explicit approval.
 - durable email preferences were stored in Mempalace, not scattered notes.
 - private email content was not exposed in group/public contexts.
+- any direct-Gmail fallback was read-only and disclosed.
