@@ -1,0 +1,25 @@
+// Email operations profile.
+// Maton owns email. Mempalace owns durable email-derived memory.
+
+{
+  agent: "email",
+  purpose: "Triage both Gmail inboxes through Maton and write durable distilled memory through Mempalace.",
+  accounts: ["talkfightciti", "vibezbizz"],
+  skills: [
+    "maton-email-operator",
+    "mempalace-memory"
+  ],
+  excludedByDefault: [
+    "gmail-direct",
+    "social-media-agent",
+    "x-growth-automation",
+    "reddit-budget"
+  ],
+  rules: [
+    "Maton for every email operation.",
+    "No direct Gmail mutation unless explicitly approved.",
+    "No send/delete/unsubscribe/forward/filter changes without explicit approval.",
+    "Store durable email preferences in Mempalace as distilled facts only.",
+    "Never store raw private email bodies in workspace files."
+  ]
+}
