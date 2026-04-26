@@ -1,0 +1,115 @@
+{
+  "schemaVersion": 1,
+  "managedBy": "maton",
+  "memoryAuthority": "mempalace",
+  "accounts": {
+    "talkfightciti": {
+      "emailEnv": "MATON_TALKFIGHTCITI_EMAIL",
+      "apiKeyEnv": "MATON_TALKFIGHTCITI_API_KEY",
+      "provider": "gmail",
+      "purpose": "FightCityTickets / ParkingBreaker / civic-ticket business",
+      "priorityBias": [
+        "legal",
+        "court",
+        "city",
+        "payment",
+        "customer_lead",
+        "account_security",
+        "vendor"
+      ],
+      "neverAutoArchive": [
+        "legal",
+        "court",
+        "city",
+        "security",
+        "customer_lead",
+        "payment_dispute"
+      ]
+    },
+    "vibezbizz": {
+      "emailEnv": "MATON_VIBEZBIZZ_EMAIL",
+      "apiKeyEnv": "MATON_VIBEZBIZZ_API_KEY",
+      "provider": "gmail",
+      "purpose": "business / creator / general operations",
+      "priorityBias": [
+        "business_opportunity",
+        "collaboration",
+        "invoice",
+        "platform_security",
+        "client",
+        "vendor"
+      ],
+      "neverAutoArchive": [
+        "security",
+        "business_opportunity",
+        "client",
+        "invoice_problem",
+        "payment_dispute"
+      ]
+    }
+  },
+  "triage": {
+    "accountScope": "both",
+    "newMailReliability": {
+      "preferred": "webhook_or_push",
+      "fallback": "scheduled_poll",
+      "cronFallback": true,
+      "idempotent": true
+    },
+    "categories": [
+      "urgent",
+      "security",
+      "action_required",
+      "waiting",
+      "receipt",
+      "project",
+      "lead",
+      "noise"
+    ],
+    "surfaceImmediately": [
+      "urgent",
+      "security",
+      "lead",
+      "action_required"
+    ],
+    "quietResult": "EMAIL_OK",
+    "dedupe": {
+      "cooldownSeconds": 7200,
+      "keyFields": [
+        "account",
+        "message_id",
+        "category",
+        "recommended_action"
+      ]
+    }
+  },
+  "allowedWithoutExtraApproval": [
+    "read",
+    "summarize",
+    "classify",
+    "create_draft",
+    "recommend_labels",
+    "apply_labels_when_requested",
+    "archive_nonurgent_when_requested"
+  ],
+  "requiresExplicitApproval": [
+    "send_email",
+    "delete_email",
+    "report_spam",
+    "unsubscribe",
+    "forward_private_email",
+    "click_links",
+    "change_filters",
+    "change_account_settings",
+    "grant_permissions"
+  ],
+  "mempalace": {
+    "writeEmailDerivedMemory": true,
+    "storeRawBodies": false,
+    "entryType": "email_context"
+  },
+  "outputs": {
+    "statePath": "~/.openclaw/state/maton-email-state.json",
+    "latestSummaryPath": "~/.openclaw/state/maton-email-latest.json"
+  }
+}
