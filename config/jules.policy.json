@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Use Jules as a deeply integrated delegated GitHub coding agent while preserving RedClaw review, safety, and memory discipline.",
+  "credentialPolicy": {
+    "apiKeyEnv": "JULES_API_KEY",
+    "envFile": "~/.openclaw/secrets/jules.env",
+    "neverCommitSecrets": true,
+    "neverPasteSecretsIntoPrompts": true
+  },
+  "integrationModel": {
+    "preferred": [
+      "github_connected_sources",
+      "jules_api_sessions",
+      "repo_root_AGENTS_md",
+      "plan_review",
+      "pull_request_output",
+      "mempalace_lesson_capture"
+    ],
+    "dashboard": "https://jules.google.com"
+  },
+  "defaultSession": {
+    "requirePlanApproval": true,
+    "defaultBranch": "main",
+    "taskScope": "bounded",
+    "outputPreference": "pull_request"
+  },
+  "allowedTaskTypes": [
+    "bugfix",
+    "test_addition",
+    "docs_update",
+    "dependency_bump",
+    "small_refactor",
+    "validation_script",
+    "bounded_feature"
+  ],
+  "disallowedTaskTypesWithoutExplicitApproval": [
+    "live_production_mutation",
+    "secrets_or_credentials",
+    "billing_or_dns_change",
+    "payment_or_ad_spend_mutation",
+    "public_messaging",
+    "email_sending",
+    "large_unbounded_rewrite",
+    "destructive_repo_action"
+  ],
+  "reviewChecklist": [
+    "plan inspected",
+    "changed files inspected",
+    "tests/build logs checked",
+    "no secrets introduced",
+    "no unrelated rewrites",
+    "acceptance criteria satisfied",
+    "human approval obtained for risky merge/deploy"
+  ],
+  "mempalace": {
+    "captureAfterUsefulWork": true,
+    "storeRawDiffs": false,
+    "entryType": "lesson",
+    "fields": [
+      "repo",
+      "task_type",
+      "files_touched",
+      "validation_result",
+      "lesson",
+      "jules_reliability"
+    ]
+  }
+}
