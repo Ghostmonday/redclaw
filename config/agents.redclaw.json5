@@ -1,0 +1,26 @@
+// RedClaw/OpenClaw configuration agent profile.
+// Keep this profile focused on workspace control-plane work.
+
+{
+  agent: "redclaw",
+  purpose: "OpenClaw workspace configuration, routing, skills, memory policy, heartbeat, cron, and validation",
+  workspace: "Ghostmonday/redclaw",
+  skills: [
+    "mempalace-memory",
+    "github",
+    "skill-creator",
+    "tmux",
+    "model-usage"
+  ],
+  excludedByDefault: [
+    "maton-email-operator",
+    "reddit-budget",
+    "x-growth-automation",
+    "social-media-agent"
+  ],
+  rules: [
+    "Do not mutate live email, ad spend, DNS, billing, or credentials.",
+    "Use Mempalace for durable memory.",
+    "Treat unaudited custom skills as experimental."
+  ]
+}
