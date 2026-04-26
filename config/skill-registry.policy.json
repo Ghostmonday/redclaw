@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Classify RedClaw workspace skills by trust level so experimental skills do not silently control important behavior.",
+  "defaultTrustLevel": "experimental",
+  "trustLevels": {
+    "core": {
+      "meaning": "Allowed to shape default behavior when explicitly enabled in agent config.",
+      "requirements": [
+        "clear SKILL.md frontmatter",
+        "bounded scope",
+        "safe failure behavior",
+        "no secret storage",
+        "manual review"
+      ]
+    },
+    "verified": {
+      "meaning": "Usable after passing validation and a real task test.",
+      "requirements": [
+        "passes syntax/frontmatter validation",
+        "has a concrete use case",
+        "has known inputs/outputs",
+        "does not conflict with core skills"
+      ]
+    },
+    "experimental": {
+      "meaning": "A shot-in-the-dark skill. May be inspected, but should not be relied on for critical behavior.",
+      "requirements": [
+        "must not be auto-enabled for sensitive agents",
+        "must not send/delete/mutate external state without explicit approval",
+        "must not override Maton, Mempalace, or RedClaw safety rules"
+      ]
+    },
+    "quarantined": {
+      "meaning": "Do not use until reviewed or repaired.",
+      "requirements": [
+        "excluded from skill allowlists",
+        "requires explicit user instruction to inspect",
+        "cannot perform mutations"
+      ]
+    }
+  },
+  "coreSkills": [
+    "mempalace-memory",
+    "maton-email-operator"
+  ],
+  "verifiedSkills": [],
+  "experimentalByDefault": true,
+  "safetyRules": [
+    "Unknown skills are experimental until audited.",
+    "Experimental skills must not be included in default agent allowlists.",
+    "Skills that touch email, money, credentials, public posts, infrastructure, or production require explicit trust classification.",
+    "Maton remains the email authority even if another email-related skill exists.",
+    "Mempalace remains the durable-memory authority even if another memory-related skill exists."
+  ]
+}
