@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""Jules API session wrapper.
+"""Jules API/session wrapper.
 
 This script is a defensive bridge for Jules usage. It keeps credentials in the
-environment, avoids printing secrets, and centralizes Jules API calls so prompts
-and playbooks do not scatter raw curl snippets.
+environment, avoids printing secrets, and centralizes Jules calls so prompts and
+playbooks do not scatter raw curl snippets.
 
-The Jules API is documented as evolving/alpha. If endpoints differ on the live
-machine, update this one wrapper instead of changing RedClaw policy files.
+Live finding: Jules rejected API-key auth with
+ACCESS_TOKEN_TYPE_UNSUPPORTED / API_KEY_SERVICE_BLOCKED. Prefer OAuth/browser
+login credentials or an official local Jules CLI bridge.
 """
 
 from __future__ import annotations
@@ -14,6 +15,8 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shutil
+import subprocess
 import sys
 import time
 import urllib.error
@@ -24,14 +27,6 @@ from typing import Any
 
 DEFAULT_BASE_URL = os.environ.get("JULES_BASE_URL", "https://jules.googleapis.com")
 DEFAULT_STATE = Path(os.path.expanduser(os.environ.get("JULES_STATE_PATH", "~/.openclaw/state/jules-sessions.json")))
-
-
-def redact(value: str) -> str:
-    if not value:
-        return ""
-    if len(value) <= 8:
-        return "***"
-    return value[:4] + "…" + value[-4:]
 
 
 def load_state(path: Path) -> dict[str, Any]:
@@ -47,19 +42,46 @@ def write_state(path: Path, state: dict[str, Any]) -> None:
     tmp.replace(path)
 
 
-def request_json(method: str, path: str, body: dict[str, Any] | None = None) -> dict[str, Any]:
+def auth_headers() -> dict[str, str]:
+    mode = os.environ.get("JULES_AUTH_MODE", "oauth").lower()
+    token = os.environ.get("JULES_OAUTH_ACCESS_TOKEN")
+    cookie = os.environ.get("JULES_AUTH_COOKIE")
     api_key = os.environ.get("JULES_API_KEY")
-    if not api_key:
-        raise SystemExit("Missing JULES_API_KEY. Load ~/.openclaw/secrets/jules.env first.")
 
-    base = DEFAULT_BASE_URL.rstrip("/")
-    url = base + path
-    data = None
     headers = {
-        "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
         "Accept": "application/json",
     }
+
+    if mode in {"oauth", "access_token", "bearer"}:
+        if not token:
+            raise SystemExit(
+                "Missing JULES_OAUTH_ACCESS_TOKEN. Run `jules login` or place an OAuth bearer token in ~/.openclaw/secrets/jules.env."
+            )
+        headers["Authorization"] = f"Bearer {token}"
+        return headers
+
+    if mode in {"cookie", "browser_cookie"}:
+        if not cookie:
+            raise SystemExit("Missing JULES_AUTH_COOKIE for cookie auth mode.")
+        headers["Cookie"] = cookie
+        return headers
+
+    if mode in {"api_key", "apikey"}:
+        if not api_key:
+            raise SystemExit("Missing JULES_API_KEY, but API-key auth is deprecated/blocked for the observed Jules path.")
+        headers["Authorization"] = f"Bearer {api_key}"
+        return headers
+
+    raise SystemExit(f"Unsupported JULES_AUTH_MODE={mode!r}")
+
+
+def request_json(method: str, path: str, body: dict[str, Any] | None = None) -> dict[str, Any]:
+    base = DEFAULT_BASE_URL.rstrip("/")
+    url = base + path
+    data = None
+    headers = auth_headers()
+
     if body is not None:
         data = json.dumps(body).encode("utf-8")
 
@@ -70,9 +92,20 @@ def request_json(method: str, path: str, body: dict[str, Any] | None = None) -> 
             return json.loads(raw) if raw else {}
     except urllib.error.HTTPError as exc:
         detail = exc.read().decode("utf-8", errors="replace")[:1000]
+        if "API_KEY_SERVICE_BLOCKED" in detail or "ACCESS_TOKEN_TYPE_UNSUPPORTED" in detail:
+            detail += "\nHint: Jules rejected API-key style auth. Use `jules login`/OAuth bearer token or browser-cookie auth."
         raise SystemExit(f"Jules API HTTP {exc.code}: {detail}") from exc
     except urllib.error.URLError as exc:
         raise SystemExit(f"Jules API connection failed: {exc.reason}") from exc
+
+
+def run_cli(args: list[str]) -> int:
+    binary = os.environ.get("JULES_CLI", "jules")
+    if not shutil.which(binary):
+        print(f"Jules CLI not found: {binary}", file=sys.stderr)
+        return 127
+    proc = subprocess.run([binary, *args], check=False)
+    return proc.returncode
 
 
 def list_sources(args: argparse.Namespace) -> int:
@@ -151,9 +184,16 @@ def followup(args: argparse.Namespace) -> int:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Jules API session wrapper")
+    parser = argparse.ArgumentParser(description="Jules API/session wrapper")
     parser.add_argument("--state", type=Path, default=DEFAULT_STATE)
     sub = parser.add_subparsers(dest="cmd", required=True)
+
+    p = sub.add_parser("login", help="Run local Jules CLI login flow, if installed")
+    p.set_defaults(func=lambda args: run_cli(["login"]))
+
+    p = sub.add_parser("cli", help="Pass arguments through to local Jules CLI")
+    p.add_argument("jules_args", nargs=argparse.REMAINDER)
+    p.set_defaults(func=lambda args: run_cli(args.jules_args))
 
     p = sub.add_parser("sources")
     p.set_defaults(func=list_sources)
