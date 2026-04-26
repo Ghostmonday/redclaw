@@ -1,57 +1,58 @@
 ---
 name: mempalace-memory
-description: Enforce Mempalace as the authoritative memory layer for RedClaw/OpenClaw. Use this skill whenever reading, writing, summarizing, recalling, or updating durable memory.
+description: Use Mempalace as the canonical durable memory layer for RedClaw/OpenClaw. Invoke for durable recall, memory writes, preference updates, project facts, decisions, lessons, and memory conflict resolution.
 ---
 
 # Mempalace Memory Authority
 
-Mempalace is the authoritative memory system.
+Mempalace is the canonical durable memory system.
 
-This skill exists to prevent scattered memory writes across random markdown files, chat context, ad-hoc notes, or project repos. RedClaw should treat Mempalace as the canonical durable memory layer and use local files only as mirrors, caches, or bootstrapping fallbacks.
+Use local workspace files as startup hints, mirrors, caches, or fallbacks. Do not treat chat context, `MEMORY.md`, daily notes, project docs, or ad-hoc markdown as the final memory authority when Mempalace is available.
 
 ## Core Rule
 
-For durable memory, use Mempalace first.
+For durable memory: read from Mempalace first, write to Mempalace first.
 
-Do not rely on conversational context as memory. Do not treat `MEMORY.md`, daily notes, or project docs as the final memory authority when Mempalace is available.
+If Mempalace is unavailable, disclose the fallback and do not claim durable memory was updated.
 
-## When To Use
+## Use This Skill For
 
-Invoke this skill before any task involving:
-
-- remembering a user preference
-- recalling a user preference
-- updating long-term context
+- recalling user preferences
+- remembering new preferences
+- storing project facts
+- recording decisions
+- storing safety boundaries
 - summarizing project history
-- storing decisions
-- linking memories to projects
-- reconciling contradictory memories
 - extracting lessons from completed work
+- reconciling conflicting memory
 - preparing future-agent context
+- storing durable email-handling preferences from Maton
 
-## Memory Write Policy
+## Memory Classification
 
-Before writing memory, classify the memory:
+Classify before writing:
 
 | Type | Examples | Action |
 | --- | --- | --- |
-| user_preference | tone, working style, tool preference | write to Mempalace |
-| project_fact | repo names, infra, active status | write to Mempalace with project tag |
-| decision | approved architecture, rejected approach | write to Mempalace with timestamp and reason |
-| secret | tokens, passwords, keys | never write |
-| transient | temporary command output, one-off logs | do not write unless it affects future behavior |
-| email_context | durable email handling preference | write to Mempalace; do not store message bodies unless explicitly requested |
+| `user_preference` | tone, workflow, tool preference | write to Mempalace |
+| `project_fact` | repo names, infra, status | write with project tag |
+| `decision` | approved architecture, rejected approach | write with timestamp and reason |
+| `lesson` | what worked or failed | write only if actionable later |
+| `safety_boundary` | never-send, no-secrets, approval rules | write with clear scope |
+| `email_context` | sender preference, label rule, recurring obligation | write distilled fact; no raw body |
+| `transient` | one-off command output, temporary logs | do not write unless it affects future behavior |
+| `secret` | tokens, passwords, keys, private credentials | never write |
 
 ## Required Memory Shape
 
-Every durable memory entry should include:
+Every durable memory write should include:
 
 ```json
 {
   "subject": "short stable name",
-  "type": "user_preference | project_fact | decision | lesson | safety_boundary",
+  "type": "user_preference | project_fact | decision | lesson | safety_boundary | email_context",
   "project": "redclaw | fightcitytickets | parkingbreaker | fatedfortress | general",
-  "source": "conversation | repo | email | calendar | manual",
+  "source": "conversation | repo | email | calendar | manual | maton",
   "confidence": "high | medium | low",
   "summary": "one concrete sentence",
   "evidence": "what proved it",
@@ -63,12 +64,40 @@ Every durable memory entry should include:
 
 Before major work, retrieve Mempalace context for:
 
-1. the user
-2. the target project
-3. relevant tool preferences
+1. Amir/user preferences
+2. target project
+3. relevant tools
 4. known safety boundaries
+5. recent decisions that constrain the task
 
-If Mempalace is unavailable, state that plainly and continue using the safest available local context. Do not silently pretend memory was loaded.
+If Mempalace is unavailable:
+
+```text
+Mempalace unavailable. I will use local workspace context as a temporary fallback and will not claim durable memory was updated.
+```
+
+Then proceed only with the safest available local context.
+
+## Write Policy
+
+Write memory when the fact will likely matter later.
+
+Good memory:
+
+- specific
+- source-backed
+- scoped to a project or user preference
+- useful for future decisions
+- free of secrets/raw private content
+
+Bad memory:
+
+- vague praise
+- raw logs
+- full email bodies
+- secrets
+- temporary command output
+- duplicated session transcripts
 
 ## Conflict Resolution
 
@@ -77,11 +106,12 @@ When memory conflicts:
 1. Prefer explicit recent user instruction.
 2. Prefer Mempalace over local markdown mirrors.
 3. Prefer repo evidence over stale conversation memory.
-4. Mark the older memory as superseded rather than deleting it silently.
+4. Mark older memory as superseded; do not silently delete.
+5. Ask only if the conflict changes a risky action.
 
-## Local Files Are Mirrors, Not Authority
+## Local File Policy
 
-These files can exist, but they are not the final source of truth when Mempalace is available:
+These files are not the final source of truth when Mempalace is available:
 
 - `MEMORY.md`
 - `USER.md`
@@ -89,31 +119,22 @@ These files can exist, but they are not the final source of truth when Mempalace
 - `memory/*.json`
 - project-specific notes
 
-Use them for bootstrapping, summaries, and low-token startup hints. Use Mempalace for canonical durable memory.
+Use them for bootstrapping and low-token summaries. Use Mempalace for canonical durable memory.
 
 ## Privacy Rules
 
 - Never store secrets.
 - Never store full private email bodies unless Amir explicitly requests it.
-- Store email-derived facts as distilled memory, not raw messages.
-- Keep group-chat-safe context separate from private/main-session memory.
-
-## Failure Behavior
-
-If Mempalace is unavailable:
-
-```text
-Mempalace unavailable. I will use local workspace context as a temporary fallback and will not claim durable memory was updated.
-```
-
-Then proceed with local files only for the current task.
+- Store email-derived facts as distilled memory.
+- Keep group-chat-safe context separate from private memory.
+- Do not expose Mempalace contents in shared contexts unless clearly safe and relevant.
 
 ## Validation Checklist
 
 A memory workflow is valid only if:
 
 - Mempalace was checked before important recall/update work.
-- durable memory writes have project/type/source/confidence metadata.
+- durable writes include type/project/source/confidence/evidence metadata.
 - secrets and raw private email bodies were excluded.
 - local files were treated as mirrors or fallbacks.
 - any fallback was disclosed.
