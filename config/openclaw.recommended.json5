@@ -1,0 +1,104 @@
+// Recommended RedClaw/OpenClaw runtime configuration skeleton.
+//
+// Install target, after validating field names on the live machine:
+//   ~/.openclaw/openclaw.json
+//
+// Validate first:
+//   openclaw config schema
+//   openclaw config get session.dmScope
+//   openclaw skills check
+//   openclaw system heartbeat last
+//   openclaw cron list
+//
+// Do not commit secrets or account credentials here.
+
+{
+  session: {
+    // Avoid one shared DM brain across unrelated peers/channels.
+    dmScope: "per-channel-peer",
+
+    reset: {
+      mode: "daily",
+      atHour: 4
+    },
+
+    resetByType: {
+      direct: {
+        mode: "idle",
+        idleMinutes: 240
+      },
+      group: {
+        mode: "idle",
+        idleMinutes: 120
+      },
+      thread: {
+        mode: "daily",
+        atHour: 4
+      }
+    }
+  },
+
+  agents: {
+    defaults: {
+      // Keep bootstrap context stable without wasting tokens on every continuation.
+      contextInjection: "continuation-skip",
+      bootstrapMaxChars: 12000,
+      bootstrapTotalMaxChars: 60000,
+      bootstrapPromptTruncationWarning: "always",
+
+      heartbeat: {
+        every: "30m",
+        includeReasoning: false,
+        includeSystemPromptSection: true,
+        lightContext: true,
+        isolatedSession: true,
+        target: "last",
+        directPolicy: "allow",
+        ackMaxChars: 300,
+        timeoutSeconds: 45,
+        activeHours: {
+          start: "08:00",
+          end: "22:00",
+          timezone: "America/Los_Angeles"
+        }
+      },
+
+      memorySearch: {
+        enabled: true,
+        sync: {
+          onSessionStart: true,
+          onSearch: true,
+          watch: true,
+          watchDebounceMs: 1500
+        },
+        query: {
+          maxResults: 8,
+          minScore: 0.35,
+          hybrid: {
+            enabled: true,
+            vectorWeight: 0.7,
+            textWeight: 0.3,
+            candidateMultiplier: 4
+          }
+        }
+      },
+
+      // Keep skill visibility intentional. Agent-specific lists should override this.
+      skills: [
+        "mempalace-memory",
+        "maton-email-operator",
+        "github"
+      ]
+    }
+  },
+
+  skills: {
+    load: {
+      watch: true,
+      watchDebounceMs: 250
+    },
+    limits: {
+      maxSkillsPromptChars: 18000
+    }
+  }
+}
