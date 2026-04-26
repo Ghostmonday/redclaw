@@ -1,6 +1,6 @@
 # TOOLS.md - Local Notes
 
-Skills define _how_ tools work. This file is for _your_ specifics — the stuff that's unique to your setup.
+Skills define _how_ tools work. This file is for local setup facts that are unique to Amir's machine. Do not store secrets, raw credentials, or secret file paths here.
 
 ## SSH
 
@@ -24,7 +24,7 @@ Skills define _how_ tools work. This file is for _your_ specifics — the stuff 
 - Config: `~/.openclaw/openclaw.json`
 - Skills installed (user): `~/.openclaw/skills/`
 - Skills installed (built-in): `~/homebase/code/openclaw/skills/`
-- MemPalace: `~/.mempalace/palace` — long-term memory
+- MemPalace: local long-term memory palace; use `mempalace__*` tools instead of exposing local internals
 
 ## Reddit Ads
 
@@ -44,6 +44,8 @@ Skills define _how_ tools work. This file is for _your_ specifics — the stuff 
 
 ## Jules
 
-- Dashboard: jules.google.com
-- API key: `/home/amir/homebase/code/inkspander/.env`
-- Note: stash local changes before pulling Jules updates
+- Dashboard: `https://jules.google.com`
+- Purpose: delegated coding/implementation agent for repo tasks that need longer execution, patching, or follow-up.
+- Credentials: local secret manager or private env only. Do not store API keys or secret file paths in workspace docs.
+- Safety: stash or commit local changes before pulling Jules updates.
+- Workflow: assign bounded tasks, inspect Jules diffs before merge/pull, and record useful decisions in Mempalace.
