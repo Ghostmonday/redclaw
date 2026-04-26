@@ -2,15 +2,24 @@
   "schemaVersion": 1,
   "purpose": "Use Jules as a deeply integrated delegated GitHub coding agent while preserving RedClaw review, safety, and memory discipline.",
   "credentialPolicy": {
-    "apiKeyEnv": "JULES_API_KEY",
+    "authModesInOrder": [
+      "oauth_access_token",
+      "browser_cookie",
+      "api_key_deprecated"
+    ],
+    "oauthAccessTokenEnv": "JULES_OAUTH_ACCESS_TOKEN",
+    "cookieEnv": "JULES_AUTH_COOKIE",
+    "apiKeyEnvDeprecated": "JULES_API_KEY",
     "envFile": "~/.openclaw/secrets/jules.env",
+    "observedApiKeyFailure": "ACCESS_TOKEN_TYPE_UNSUPPORTED / API_KEY_SERVICE_BLOCKED",
     "neverCommitSecrets": true,
-    "neverPasteSecretsIntoPrompts": true
+    "neverPasteSecretsIntoPrompts": true,
+    "preferredSetup": "Run jules login on the live machine when available, then export an OAuth bearer token or use the official local CLI/session bridge."
   },
   "integrationModel": {
     "preferred": [
       "github_connected_sources",
-      "jules_api_sessions",
+      "jules_cli_or_oauth_api_sessions",
       "repo_root_AGENTS_md",
       "plan_review",
       "pull_request_output",
