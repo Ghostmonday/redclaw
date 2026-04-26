@@ -1,0 +1,25 @@
+// ParkingBreaker/FightCityTickets operations profile.
+// Keeps telemetry/ad-ops separated from RedClaw root identity.
+
+{
+  agent: "parkingbreaker-ops",
+  purpose: "Observe ParkingBreaker telemetry, generate dry-run recommendations, and surface actionable deltas.",
+  project: "parkingbreaker",
+  appRepo: "Ghostmonday/FIGHTCITYTICKETS",
+  skills: [
+    "parkingbreaker-ops",
+    "mempalace-memory",
+    "use-railway"
+  ],
+  excludedByDefault: [
+    "maton-email-operator",
+    "social-media-agent",
+    "x-growth-automation"
+  ],
+  rules: [
+    "Heartbeat may surface deltas but must not mutate live ad spend.",
+    "Budget executor defaults to dry-run.",
+    "Live budget mutation requires explicit approval and provider-specific implementation.",
+    "Do not confuse ParkingBreaker ops with RedClaw identity."
+  ]
+}
